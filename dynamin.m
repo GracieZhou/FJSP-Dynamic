@@ -8,7 +8,9 @@ function [flag, max_mac_time, up_mac_serial, up_mac_start, up_mac_end, update_jo
 % 动态事件发送后需要处理的job list,第一列是job编号，第二列是对应的工序号，第三列是最早开始时间
 todo_job_list = [];
 
-% 删除某患者后续阶段
+%-----------------------------------------------
+% 1. 删除某患者后续阶段
+%-----------------------------------------------
 if ~isempty(delete_job)
     [num, ~] = size(delete_job);
     for i = 1:num
@@ -30,7 +32,9 @@ if ~isempty(delete_job)
     end
 end
 
-% 新增患者
+%-----------------------------------------------
+% 2. 新增患者
+%-----------------------------------------------
 if ~isempty(add_job)
     flag = true;
     N = length(job);
@@ -46,7 +50,9 @@ if ~isempty(add_job)
     update_job = [job, add_job];
 end
 
-% 删除某个医疗资源
+%-----------------------------------------------
+% 3. 删除某个医疗资源
+%-----------------------------------------------
 if ~isempty(delete_mac)
     [num, ~] = size(delete_mac);
     for i = 1:num
@@ -80,18 +86,22 @@ if ~isempty(delete_mac)
     end
 end
 
-% 增加某些医疗资源
+%-----------------------------------------------
+% 4. 增加某些医疗资源
+%-----------------------------------------------
 if ~isempty(add_mac)
     [row, ~] = size(add_mac);
     for i = 1:row
-        [mac, mac_state] = UpdateMac(mac, mac_state, add_mac, 'A');
-        mac_serial = [mac_serial, cell(1, add_mac(2))];
-        mac_start = [mac_start, cell(1, add_mac(2))];
-        mac_end = [mac_end, cell(1, add_mac(2))];
+        [mac, mac_state] = UpdateMac(mac, mac_state, add_mac(i,:), 'A');
+        mac_serial = [mac_serial, cell(1, add_mac(i,2))];
+        mac_start = [mac_start, cell(1, add_mac(i,2))];
+        mac_end = [mac_end, cell(1, add_mac(i,2))];
     end
 end
 
-% todo list 去重，并删除对应的task
+%-----------------------------------------------
+% todo list 去重，并删除对应的task，再进行动态插入
+%-----------------------------------------------
 if ~isempty(todo_job_list)
     todo_job_list = unique(todo_job_list, 'rows');
     [row, ~] = size(todo_job_list);

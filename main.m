@@ -7,12 +7,15 @@ gnmax = 100; %最大代数
 pc = 0.8; %交叉概率  
 pm = 0.1; %变异概率
 pop_size = 10; %初始化种群数量
-eventStartTime = 20; %发送动态事件的时刻
+eventStartTime = 20; %发生动态事件的时刻
 %===============================%
 
 [job, mac_num] = read_data('hospitaldata.xlsx');
 [mac, mac_state] = creat_machine(mac_num);
 
+%-----------------------------------------------
+% 获取最佳静态策略
+%-----------------------------------------------
 [best_pop, best_time, mean_time] = get_schedule(gnmax, pc, pm, pop_size, job, mac_num);
 [minst_time, minst_n] = min(best_time);
 best_schedule = best_pop(minst_n,:);
@@ -35,7 +38,9 @@ fprintf('遗传算法得到的最短时间:%.2f\n',minst_time);
 fprintf('最短时间对应的进化代数: %d\n', minst_n);
 
 
-% 执行过程中发送动态事件
+%-----------------------------------------------
+% 执行过程中发生动态事件
+%-----------------------------------------------
 fprintf('eventStartTime: %d, minst_time: %f\n', eventStartTime, minst_time);
 if (eventStartTime > minst_time) || (minst_time == 0)
     fprintf('动态事件的发生不影响进展\n');
