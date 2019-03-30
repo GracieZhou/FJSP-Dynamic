@@ -1,6 +1,8 @@
 %输入机器开始时间，结束时间，最大完工时间
 %画出一个甘特图
-function draw_gantt(max_mac_time, mac_serial, mac_start, mac_end, job, mac)
+function draw_gantt(max_mac_time, mac_serial, mac_start, mac_end, job, mac, time)
+global MIN_START_TIME
+
 % 获取mac的个数
 nb_mac = mac_max_num(mac);
 
@@ -12,8 +14,13 @@ while  min(mean(color,2)) < 0.2 %sum(var(color)) < 0.3
     color = rand(job_num,3);
 end
 figure;
-axis([0, max_mac_time+5, 0, nb_mac+0.5]);%x轴 y轴的范围
-set(gca,'xtick',0:2:max_mac_time+5) ;%x轴的增长幅度
+if time > MIN_START_TIME
+    plot([time,time], [0 nb_mac], 'r--');
+    hold on;
+end
+
+axis([MIN_START_TIME, max_mac_time+1, 0, nb_mac+0.5]);%x轴 y轴的范围
+set(gca,'xtick',MIN_START_TIME:1:max_mac_time+1) ;%x轴的增长幅度
 set(gca,'ytick',0:1:nb_mac+0.5) ;%y轴的增长幅度
 xlabel('处理时长','FontName','微软雅黑','Color','b','FontSize',10)
 ylabel('医疗资源','FontName','微软雅黑','Color','b','FontSize',10,'Rotation',90)

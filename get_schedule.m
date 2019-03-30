@@ -11,6 +11,8 @@ function [best_pop,best_time,mean_time] = get_schedule(gnmax, pc, pm, pop_size, 
 %   best_pop 最优种群
 %   best_time 最优时间
 %   mean_time 平均时间
+global MIN_START_TIME
+global MAX_END_TIME
 
 pop = inipop(pop_size, job, mac_num);
 best_time = zeros(1, gnmax);
@@ -22,8 +24,12 @@ for generation = 1 : gnmax
     child_cross = cross_pox(father_pool, pc, job);
     child_mut = mutation_exchange(child_cross,pm, job, mac_num);
     [~, best_time(1, generation), best_pop_n, max_time_list] = choose_prob(child_mut, job, mac_num);
-    mean_time(1, generation) = mean(max_time_list);
-    best_pop(generation,:) = child_mut(best_pop_n, :);
+    
+    % 在有效时间范围内才纳入最佳序列中
+    if best_time(generation) > MIN_START_TIME && best_time(generation) <= MAX_END_TIME
+        mean_time(1, generation) = mean(max_time_list);
+        best_pop(generation,:) = child_mut(best_pop_n, :);
+    end
 end
 
 end

@@ -15,6 +15,7 @@ job_start=cell(1,length(job));
 job_end=cell(1,length(job));
 mac_start=cell(1,sum(mac_num));
 mac_end=cell(1,sum(mac_num));
+overtime = [];
 for i=1:n
     %此部分求出第i号工序加工机器:the_mac
     the_mac_type=job{job_serial(i,1)}{job_serial(i,2)}(2);
@@ -27,34 +28,46 @@ for i=1:n
     
     %求出工件开始时间（不是真正的开始时间）
     if job_serial(i,2)==1
-        job_start{job_serial(i,1)}(1)=[0];
+        job_start{job_serial(i,1)}(1) = job{job_serial(i,1)}{1}(3); %最早开始时间
     else
         job_start{job_serial(i,1)}(end+1)=job_end{job_serial(i,1)}(job_serial(i,2)-1);
     end
+    
     %将第i个工序插入到机器中加工，如果机器间隔合适，插入间隔中，如不合适，插入到最后一位
     %有一个问题，jobserial没有调顺序，结构还待优化
-%   if length(mac_start{the_mac})>=1
-    [mac_start{the_mac},mac_end{the_mac},job_end_time,insert_pot] =...
-        insert_mac(mac_start{the_mac},...
+    [mac_start{the_mac},mac_end{the_mac},job_end_time,insert_pot] = insert_mac(...
+        mac_start{the_mac},...
         mac_end{the_mac},...
         job_start{job_serial(i,1)}(job_serial(i,2)),...
         job_end{job_serial(i,1)},...
         job{job_serial(i,1)}{job_serial(i,2)}(1),...
+        job{job_serial(i,1)}{job_serial(i,2)}(3),...
+        job{job_serial(i,1)}{job_serial(i,2)}(4),...
         true);
-    mac_serial{the_mac} = [mac_serial{the_mac}(1:insert_pot-1,:);job_serial(i,:);mac_serial{the_mac}(insert_pot:end,:)];
-    job_end{job_serial(i,1)}(end+1)=job_end_time;
-%     else  
-%         mac_start{the_mac}=max([job_end{job_serial(i,1)},mac_start{the_mac},0],[],'omitnan');
-%         mac_end{the_mac}=[max(mac_start{the_mac})+job{job_serial(i,1)}{job_serial(i,2)}(1)];
-%         mac_serial{the_mac}=[job_serial(i,:)];
-%         job_end{job_serial(i,1)}(end+1)=job{job_serial(i,1)}{job_serial(i,2)}(1)+max([job_start{job_serial(i,1)}(end),0],[],'omitnan');
-%     end
+    if insert_pot > 0
+        if insert_pot == 1
+            mac_serial{the_mac} = [job_serial(i,:); mac_serial{the_mac}];
+        else
+            mac_serial{the_mac} = [mac_serial{the_mac}(1:insert_pot-1,:);job_serial(i,:);mac_serial{the_mac}(insert_pot:end,:)];
+        end
+        job_end{job_serial(i,1)}(end+1)=job_end_time;
+    else
+        overtime(end+1,:) = job_serial(i,:);
+        job_end{job_serial(i,1)}(end+1)=job_end_time;
+    end
+
 end
+
 %求出机器最大完工时间
+global MAX_END_TIME
 max_mac_time=0;
-for i=1:sum(mac_num)
-    if ~isempty(mac_end{i})
-        max_mac_time=max(max_mac_time,max(mac_end{i}));
+if ~isempty(overtime)
+    max_mac_time = MAX_END_TIME;
+else
+    for i=1:sum(mac_num)
+        if ~isempty(mac_end{i})
+            max_mac_time=max(max_mac_time,max(mac_end{i}));
+        end
     end
 end
 end

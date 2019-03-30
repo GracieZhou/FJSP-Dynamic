@@ -2,9 +2,9 @@ function [p, best_time, best_pop_n, max_time] = choose_prob(pop, job, mac_num)
 pop_scale = size(pop, 1);  %读取种群大小  
 max_time = zeros(pop_scale, 1);  
 for i = 1:pop_scale  
-   max_time(i) = decode(pop(i,:), job, mac_num);  %计算函数值，即适应度  
+   max_time(i) = decode(pop(i,:), job, mac_num);  %计算函数值，即适应度
 end  
-[best_time, best_pop_n] = min(max_time);
+[best_time, best_pop_n] = min(max_time, [], 'omitnan');
 f = 1./max_time'; %取距离倒数   
 %根据个体的适应度计算其被选择的概率  
 fsum = 0;  

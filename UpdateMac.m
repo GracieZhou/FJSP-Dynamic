@@ -5,7 +5,14 @@ up_mac = mac;
 up_mac_state = mac_state;
 % 删除mac信息
 if flag == 'D'
-    up_mac_state{change_mac(1)}(change_mac(2)) = 0; 
+    for i = 1:length(mac)
+        for j = 1:length(mac{i})
+            if change_mac == mac{i}(j)
+                up_mac_state{i}(j) = 0; 
+                break;
+            end
+        end
+    end
 end
 
 % 增加mac信息

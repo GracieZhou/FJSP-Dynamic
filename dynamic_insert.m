@@ -1,10 +1,11 @@
-function [max_mac_time, mac_serial, mac_start, mac_end] = dynamic_insert(...
+function [max_mac_time, mac_serial, mac_start, mac_end, over_time_job] = dynamic_insert(...
     job_serial, mac_serial, mac_start, mac_end, job, mac, mac_state)
 %dynamic_insert 动态插入
 %   
 [n, ~] = size(job_serial);
 job_start = cell(1, length(job));
 job_end = cell(1, length(job));
+over_time_job = [];
 
 for i=1:n
     %此部分求出第i号工序加工机器:the_mac
@@ -29,7 +30,7 @@ for i=1:n
         job_start{job_serial(i,1)}(end+1) = job_end{job_serial(i,1)}(job_serial(i,2)-1);
     end
     
-    %将第i个工序插入到机器中加工，如果机器间隔合适，插入间隔中，如不合适，插入到结束时间最早的机器最后一位
+    %将第i个工序插入到机器中加工，如果机器间隔合适，插入间隔中；如不合适，插入到结束时间最早的机器最后一位
     insert_flag = false;
     for k = 1:find_mac_len
         % 跳过状态为不可用的mac
@@ -40,12 +41,22 @@ for i=1:n
         the_mac = find_mac(k);
         % mac_serial 序列为空，则直接插入
         if isempty(mac_serial{the_mac})
-            mac_serial{the_mac}(end+1,:) = [job_serial(i,1) job_serial(i,2)];
-            mac_start{the_mac}(end+1) = max([job_end{job_serial(i,1)}(end), 0],[],'omitnan');
-            mac_end{the_mac}(end+1) = mac_start{the_mac}(end) + job{job_serial(i,1)}{job_serial(i,2)}(1);
-            job_end{job_serial(i,1)}(end+1) = mac_end{the_mac}(end);
-            insert_flag = true;
-            break;
+            if isempty(job_end{job_serial(i,1)})
+                find_start = job{job_serial(i,1)}{job_serial(i,2)}(3);
+            else
+                find_start = max(job_end{job_serial(i,1)}(end), job{job_serial(i,1)}{job_serial(i,2)}(3));  
+            end
+            find_end = find_start + job{job_serial(i,1)}{job_serial(i,2)}(1);
+            
+            if find_start >= job{job_serial(i,1)}{job_serial(i,2)}(3) &&...
+                    find_end <= job{job_serial(i,1)}{job_serial(i,2)}(4)
+                mac_serial{the_mac}(end+1,:) = [job_serial(i,1) job_serial(i,2)];
+                mac_start{the_mac}(end+1) = find_start;
+                mac_end{the_mac}(end+1) = find_end;
+                job_end{job_serial(i,1)}(end+1) = mac_end{the_mac}(end);
+                insert_flag = true;
+                break;
+            end
         end
         
         [mac_start{the_mac}, mac_end{the_mac},job_end_time, insert_pot] = insert_mac(...
@@ -53,6 +64,8 @@ for i=1:n
             job_start{job_serial(i,1)}(job_serial(i,2)),...
             job_end{job_serial(i,1)},...
             job{job_serial(i,1)}{job_serial(i,2)}(1),...
+            job{job_serial(i,1)}{job_serial(i,2)}(3),...
+            job{job_serial(i,1)}{job_serial(i,2)}(4),...
             false);
 
         if insert_pot > 0
@@ -79,9 +92,19 @@ for i=1:n
         end
         [~, index] = min(temp, [], 'omitnan');
         insert_mac_index = find_mac(index);
+        if isempty(job_end{job_serial(i,1)})
+            find_start = max(mac_end{insert_mac_index}(end), job{job_serial(i,1)}{job_serial(i,2)}(3));
+        else
+            find_start = max([mac_end{insert_mac_index}(end), job_end{job_serial(i,1)}(end), job{job_serial(i,1)}{job_serial(i,2)}(3)],[],'omitnan');
+        end
+        find_end = find_start + job{job_serial(i,1)}{job_serial(i,2)}(1);
+        if find_end > job{job_serial(i,1)}{job_serial(i,2)}(4)
+            over_time_job(end+1,:) = [job_serial(i,1), job_serial(i,2), find_start, find_end,...
+                job{job_serial(i,1)}{job_serial(i,2)}(3), job{job_serial(i,1)}{job_serial(i,2)}(4)]; 
+        end
         mac_serial{insert_mac_index} = [mac_serial{insert_mac_index}(1:end,:); [job_serial(i,1) job_serial(i,2)]];
-        mac_start{insert_mac_index}(end+1) = max([mac_end{insert_mac_index}(end),job_end{job_serial(i,1)}(end), 0],[],'omitnan');
-        mac_end{insert_mac_index}(end+1) = mac_start{insert_mac_index}(end) + job{job_serial(i,1)}{job_serial(i,2)}(1);
+        mac_start{insert_mac_index}(end+1) = find_start;
+        mac_end{insert_mac_index}(end+1) = find_end;
         job_end{job_serial(i,1)}(end+1) = mac_end{insert_mac_index}(end);
     end
 end
@@ -94,5 +117,6 @@ for i=1:nb_mac
         max_mac_time = max(max_mac_time,max(mac_end{i}));
     end
 end
+
 end
 

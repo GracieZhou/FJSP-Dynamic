@@ -1,4 +1,4 @@
-function [flag, max_mac_time, up_mac_serial, up_mac_start, up_mac_end, update_job, update_mac] = dynamin(...
+function [flag, max_mac_time, up_mac_serial, up_mac_start, up_mac_end, update_job, update_mac, over_time_job] = dynamin(...
     mac_serial, mac_start, mac_end,...
     add_job, delete_job, add_mac, delete_mac,...
     eventStartTime, job, mac, mac_state)
@@ -55,9 +55,15 @@ end
 %-----------------------------------------------
 if ~isempty(delete_mac)
     [num, ~] = size(delete_mac);
+    nb_mac = mac_max_num(mac);
     for i = 1:num
-        [~, mac_state] = UpdateMac(mac, mac_state, delete_mac, 'D');
-        mac_pos = mac{delete_mac(1)}(delete_mac(2));
+        % 判断删除的mac id是否超范围
+        if delete_mac(i,1) > nb_mac
+            continue;
+        end
+        
+        mac_pos = delete_mac(i,1);
+        [~, mac_state] = UpdateMac(mac, mac_state, mac_pos, 'D');
         [row, ~] = size(mac_serial{mac_pos});
         for j = 1:row
             if mac_start{mac_pos}(j) >= eventStartTime
@@ -113,7 +119,7 @@ if ~isempty(todo_job_list)
     end
     
     % 动态插入对应的任务
-    [max_mac_time, mac_serial, mac_start, mac_end] = dynamic_insert...
+    [max_mac_time, mac_serial, mac_start, mac_end, over_time_job] = dynamic_insert...
         (todo_job_list, mac_serial, mac_start, mac_end, update_job, mac, mac_state);
     up_mac_serial = mac_serial;
     up_mac_start = mac_start;
