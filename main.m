@@ -18,6 +18,18 @@ eventStartTime = 10; %发生动态事件的时刻
 [mac, mac_state] = creat_machine(mac_num);
 
 %-----------------------------------------------
+% 获取先进先出策略
+%-----------------------------------------------
+pop = inipop(1, job, mac_num);
+[f_mac_time, f_mac_serial, f_mac_start, f_mac_end] = decode(pop, job, mac_num);
+draw_gantt(f_mac_time, f_mac_serial, f_mac_start, f_mac_end, job, mac, 0);
+fprintf('先进先出策略完成时间:%.2f\n',f_mac_time);
+f_job_wait = job_waittime(f_mac_serial, f_mac_start, f_mac_end, job, mac);
+fprintf('先进先出策略用户等待时间:\n');
+f_job_wait
+
+if 1
+%-----------------------------------------------
 % 获取最佳静态策略
 %-----------------------------------------------
 [best_pop, best_time, mean_time] = get_schedule(gnmax, pc, pm, pop_size, job, mac_num);
@@ -44,7 +56,9 @@ else
 
     fprintf('遗传算法得到的最短时间:%.2f\n',minst_time);  
     fprintf('最短时间对应的进化代数: %d\n', minst_n);
-
+    job_wait = job_waittime(mac_serial, mac_start, mac_end, job, mac);
+    fprintf('遗传算法静态策略用户等待时间:\n');
+    job_wait
     
     %-----------------------------------------------
     % 执行过程中发生动态事件
@@ -72,13 +86,16 @@ else
             
             draw_gantt(d_max_mac_time, up_mac_serial, up_mac_start, up_mac_end, update_job, update_mac, eventStartTime);
             fprintf('动态规划获取到的最短完成时间:%.2f\n',d_max_mac_time);
+            d_job_wait = job_waittime(up_mac_serial, up_mac_start, up_mac_end, job, mac);
+            fprintf('动态策略用户等待时间:\n');
+            d_job_wait
         else
             fprintf('动态事件的发生不影响进展\n');
         end
 
     end
 end
-
+end
 
 
 

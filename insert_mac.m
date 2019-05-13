@@ -7,16 +7,18 @@ function [mac_start,mac_end,job_end_time,insert_pot] = insert_mac(...
 job_end_time = job_start + job_time;
 insert_pot = -1;
 
-% 插入序列开始前
-if ~isempty(mac_start)
-    find_start = max(job_start, min_start);
-    find_end = find_start + job_time;
-    if find_end <= min(mac_start(1), max_end)
-        mac_start = [find_start, mac_start];
-        mac_end = [find_end, mac_end];
-        job_end_time = find_end;
-        insert_pot = 1;
-        return;
+if ~is_insert_tail
+    % 插入序列开始前
+    if ~isempty(mac_start)
+        find_start = max(job_start, min_start);
+        find_end = find_start + job_time;
+        if find_end <= min(mac_start(1), max_end)
+            mac_start = [find_start, mac_start];
+            mac_end = [find_end, mac_end];
+            job_end_time = find_end;
+            insert_pot = 1;
+            return;
+        end
     end
 end
 
